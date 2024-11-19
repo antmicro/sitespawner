@@ -1,0 +1,27 @@
+image: debian:bookworm
+
+.common_only: &common_only
+  only:
+    - main
+    - merge_requests
+
+stages:
+  - lint
+
+.install-deps: &install_deps |-
+  apt-get -qqy update &> /dev/null
+  apt-get -qqy install python3 python3-venv
+
+.prepare-venv: &prepare_venv |-
+  python3 -m venv .venv
+  source .venv/bin/activate
+
+lint:
+  <<: *common_only
+  stage: lint
+  script:
+    - *install_deps
+    - *prepare_venv
+    - pip install black ruff
+    - black --check .
+    - ruff check
