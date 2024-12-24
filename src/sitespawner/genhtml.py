@@ -56,25 +56,28 @@ def parse_infos(input_files: List[str]):
         lines_found_sum = 0
         lines_hit_sum = 0
         module_name, _ = i.split("_")[-1].split(".")
+        match = "L"
+        if "branch" in module_name:
+            match = "BR"
 
         with open(i) as f:
             file_path = None
-            lines_found = None
-            lines_hit = None
+            lines_found = 0
+            lines_hit = 0
             for line in f:
                 if line.startswith("SF:"):
                     file_path = line[3:].strip()
-                elif line.startswith("LF:"):
-                    lines_found = int(line[3:])
+                elif line.startswith(f"{match}F:"):
+                    lines_found = int(line[len(match) + 2:])
                     lines_found_sum += lines_found
-                elif line.startswith("LH:"):
-                    lines_hit = int(line[3:])
+                elif line.startswith(f"{match}H:"):
+                    lines_hit = int(line[len(match) + 2:])
                     lines_hit_sum += lines_hit
                 elif line.startswith("end_of_record"):
                     data[file_path][module_name] = [lines_hit, lines_found]
                     file_path = None
-                    lines_found = None
-                    lines_hit = None
+                    lines_found = 0
+                    lines_hit = 0
 
         data["Total:"][module_name] = [lines_hit_sum, lines_found_sum]
     return data

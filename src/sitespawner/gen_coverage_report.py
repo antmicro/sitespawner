@@ -24,10 +24,12 @@ def obtain_stdout(filename) -> TextIOWrapper | int:
     return subprocess.DEVNULL
 
 
-def lcov_merge(input_files: List[str], output_file: str):
+def lcov_merge(input_files: List[str], output_file: str, include_branch: bool = True):
     """Invokes lcov tool to add `input_file` into the tracefile.
     `output_file` becomes then an aggregate of *.info files."""
     lcov_command = ["lcov", "-o", output_file]
+    if include_branch:
+        lcov_command += ["--branch-coverage"]
 
     for input_file in input_files:
         lcov_command += ["-a", input_file]
@@ -45,9 +47,14 @@ def lcov_genhtml(
     path_prefix,
     lcov_report_dir="lcov_report",
     log_output_path="lcov_genhtml.log",
+    include_branch: bool = True,
 ):
     """Invokes lcov's genhtml tool to generate source file views for the coverage report."""
-    command = ["genhtml", "--output-dir", lcov_report_dir, *info_files]
+    command = ["genhtml", "--output-dir", lcov_report_dir]
+    if include_branch:
+        command += ["--branch-coverage"]
+
+    command += [*info_files]
 
     if not path_prefix:
         subprocess.run(
@@ -94,7 +101,7 @@ def generate_coverage_reports(
 
     for info_file in info_files:
         logger.debug(f"Preprocessing {info_file}")
-        lcov_extract_command = ["lcov", "--extract", info_file, src_pattern, "-o", info_file]
+        lcov_extract_command = ["lcov", "--branch-coverage", "--extract", info_file, src_pattern, "-o", info_file]
 
         data = parse_infos([str(info_file)])
         if len(data.keys()) == 0:
@@ -129,7 +136,7 @@ def generate_coverage_reports(
         )
         if src_remove_pattern is not None:
             subprocess.run(
-                ["lcov", "--remove", info_file, *src_remove_pattern, "-o", info_file],
+                ["lcov", "--branch-coverage", "--remove", info_file, *src_remove_pattern, "-o", info_file],
                 stdout=obtain_stdout(f"{info_file}_remove.log"),
                 check=False,
             )
@@ -141,19 +148,22 @@ def generate_coverage_reports(
         raise Exception(msg)
 
     # Run LCOV's genhtml to gather source-file pages
+    line_merged = Path("./merged_line.info")
     branch_merged = Path("./merged_branch.info")
     toggle_merged = Path("./merged_toggle.info")
     lcov_genhtml_output_merged_log = Path("./lcov_genhtml_merged.out")
 
     # Find and classify coverage files
-    branch_files, toggle_files = {}, {}
+    line_files, branch_files, toggle_files = {}, {}, {}
     files = Path(info_report_dir).glob("**/coverage_*.info")
     file_names = set()
 
     for file in files:
+        # line coverage is gathered together with branch coverage
         if file.name.endswith("_branch.info"):
             file_names.add(file.name.removesuffix("_branch.info"))
             branch_files[file.name.removesuffix("_branch.info")] = file
+            line_files[file.name.removesuffix("_branch.info")] = file
         elif file.name.endswith("_toggle.info"):
             file_names.add(file.name.removesuffix("_toggle.info"))
             toggle_files[file.name.removesuffix("_toggle.info")] = file
@@ -161,6 +171,8 @@ def generate_coverage_reports(
     # Generate reports for each coverage file set
     for name_body in file_names:
         input_files = []
+        if name_body in line_files:
+            input_files.append(str(line_files[name_body]))
         if name_body in toggle_files:
             input_files.append(str(toggle_files[name_body]))
         if name_body in branch_files:
@@ -196,13 +208,17 @@ def generate_coverage_reports(
     # Merge branch files
     merged_input_files = []
 
+    if line_files:
+        lcov_merge(line_files.values(), line_merged, False)
+        merged_input_files.append(str(line_merged))
+
     if branch_files:
-        lcov_merge(branch_files.values(), branch_merged)
+        lcov_merge(branch_files.values(), branch_merged, True)
         merged_input_files.append(str(branch_merged))
 
     # Merge toggle files
     if toggle_files:
-        lcov_merge(toggle_files.values(), toggle_merged)
+        lcov_merge(toggle_files.values(), toggle_merged, False)
         merged_input_files.append(str(toggle_merged))
 
     # Generate final combined report
