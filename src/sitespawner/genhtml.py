@@ -187,7 +187,7 @@ def sub_src_view(
     file = Path(file).resolve()
 
     inner_path = file.relative_to(src_prefix).parent
-    html_name = f"{file.name}.gcov.html"
+    html_name = f"{file.name}.gcov.html.table"
 
     main_table = None
     src_html_path = Path(html_src_dir) / inner_path / html_name
@@ -197,9 +197,7 @@ def sub_src_view(
         return
 
     with open(src_html_path) as src:
-        soup = BS(src, features="html.parser")
-        elem = soup.findAll("table")
-        main_table = elem[len(elem) - 2]
+        main_table = src.read()
 
     report_html = template_env.get_template("src_view.html")
 

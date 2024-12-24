@@ -4,10 +4,13 @@
 
 import logging
 import subprocess
+import re
 from io import TextIOWrapper
 from pathlib import Path
 from shutil import copy2
 from typing import List
+
+from bs4 import BeautifulSoup as BS
 
 from sitespawner.common import args_on_debug_logger, get_logger, main_func_log, styles_dir
 from sitespawner.genhtml import genhtml, get_common_src_path, parse_infos
@@ -69,6 +72,28 @@ def lcov_genhtml(
             stdout=obtain_stdout(log_output_path),
             check=False,
         )
+
+    for file in lcov_report_dir.glob("**/*.gcov.html"):
+
+        main_table = None
+
+        with open(file) as src:
+            soup = BS(src, features="html.parser")
+            elem = soup.findAll("table")
+            main_table = elem[len(elem) - 2]
+            main_table.find("pre", class_="sourceHeading").string = "             Toggle data     Branch data     Line data    Source code"
+
+        main_table = str(main_table).split("\n")
+        for i, line in enumerate(main_table):
+            toggle_data = "             "
+            if "toggle" in info_files:
+                toggle_data = line[line.find(":") + 1 : line.rfind(":")]
+
+            line = line.replace("</span>", f"</span>{toggle_data}:", 1) + "\n"
+            main_table[i] = line
+        with open(f"{file}.table", "w") as dest:
+            dest.writelines(main_table)
+
 
 
 @args_on_debug_logger(logger=logger)
@@ -157,17 +182,17 @@ def generate_coverage_reports(
     line_files, branch_files, toggle_files = {}, {}, {}
     files = Path(info_report_dir).glob("**/coverage_*.info")
     file_names = set()
-
     for file in files:
         if file.name.endswith("_branch.info"):
             copy2(file, file.name.removesuffix("_branch.info") + "_line.info")
 
     files = Path(info_report_dir).glob("**/coverage_*.info")
+
     for file in files:
         if file.name.endswith("_line.info"):
             file_names.add(file.name.removesuffix("_line.info"))
             line_files[file.name.removesuffix("_line.info")] = file
-        if file.name.endswith("_branch.info"):
+        elif file.name.endswith("_branch.info"):
             file_names.add(file.name.removesuffix("_branch.info"))
             branch_files[file.name.removesuffix("_branch.info")] = file
         elif file.name.endswith("_toggle.info"):
@@ -188,11 +213,16 @@ def generate_coverage_reports(
         test_output_dir = Path(output_dir) / f"all_{test_name}"
         (test_output_dir / "_static").mkdir(parents=True, exist_ok=True)
 
-        info_files = Path(info_report_dir).glob(f"**/*{test_name}*.info")
+        info_branch_files = Path(info_report_dir).glob(f"**/*{test_name}*_branch.info")
+        info_line_files = Path(info_report_dir).glob(f"**/*{test_name}*_line.info")
+        info_toggle_files = Path(info_report_dir).glob(f"**/*{test_name}*_toggle.info")
         lcov_html_dir = curr_dir / "lcov_report"
+        lcov_toggle_html_dir = curr_dir / "lcov_toggle_report"
 
         lcov_genhtml_output_name = Path(f"./lcov_genhtml_{test_name}.log")
-        lcov_genhtml(info_files, src_path, lcov_html_dir, lcov_genhtml_output_name)
+        lcov_genhtml(info_branch_files + info_line_files, src_path, lcov_html_dir, lcov_genhtml_output_name)
+        lcov_toggle_genhtml_output_name = Path(f"./lcov_toggle_genhtml_{test_name}.log")
+        lcov_genhtml(info_files, src_path, lcov_toggle_html_dir, lcov_toggle_genhtml_output_name)
         genhtml(
             input_files=input_files,
             output_dir=test_output_dir,
@@ -212,48 +242,48 @@ def generate_coverage_reports(
         )
 
     # Merge branch files
-    merged_input_files = []
+    #merged_input_files = []
 
-    if line_files:
-        lcov_merge(line_files.values(), line_merged, False)
-        merged_input_files.append(str(line_merged))
+    #if line_files:
+    #    lcov_merge(line_files.values(), line_merged, False)
+    #    merged_input_files.append(str(line_merged))
 
-    if branch_files:
-        lcov_merge(branch_files.values(), branch_merged, True)
-        merged_input_files.append(str(branch_merged))
+    #if branch_files:
+    #    lcov_merge(branch_files.values(), branch_merged, True)
+    #    merged_input_files.append(str(branch_merged))
 
-    # Merge toggle files
-    if toggle_files:
-        lcov_merge(toggle_files.values(), toggle_merged, False)
-        merged_input_files.append(str(toggle_merged))
+    ## Merge toggle files
+    #if toggle_files:
+    #    lcov_merge(toggle_files.values(), toggle_merged, False)
+    #    merged_input_files.append(str(toggle_merged))
 
-    # Generate final combined report
-    final_output_dir = Path(output_dir) / "all"
-    (final_output_dir / "_static").mkdir(parents=True, exist_ok=True)
+    ## Generate final combined report
+    #final_output_dir = Path(output_dir) / "all"
+    #(final_output_dir / "_static").mkdir(parents=True, exist_ok=True)
 
-    lcov_genhtml(
-        merged_input_files,
-        src_path,
-        lcov_html_dir,
-        lcov_genhtml_output_merged_log,
-    )
-    genhtml(
-        input_files=merged_input_files,
-        output_dir=final_output_dir,
-        src_path=src_path,
-        project_name=project_name,
-        test_name="all",
-        logo_src=logo_src,
-        logo_href=logo_href,
-        html_src_dir=lcov_html_dir,
-    )
+    #lcov_genhtml(
+    #    merged_input_files,
+    #    src_path,
+    #    lcov_html_dir,
+    #    lcov_genhtml_output_merged_log,
+    #)
+    #genhtml(
+    #    input_files=merged_input_files,
+    #    output_dir=final_output_dir,
+    #    src_path=src_path,
+    #    project_name=project_name,
+    #    test_name="all",
+    #    logo_src=logo_src,
+    #    logo_href=logo_href,
+    #    html_src_dir=lcov_html_dir,
+    #)
 
-    copy2(styles_dir / "main.css", final_output_dir)
-    copy2(styles_dir / "cov.css", final_output_dir)
-    copy2(
-        styles_dir / "assets" / "chips-alliance-logo-mono.svg",
-        final_output_dir / "_static" / "white.svg",
-    )
+    #copy2(styles_dir / "main.css", final_output_dir)
+    #copy2(styles_dir / "cov.css", final_output_dir)
+    #copy2(
+    #    styles_dir / "assets" / "chips-alliance-logo-mono.svg",
+    #    final_output_dir / "_static" / "white.svg",
+    #)
 
 
 @main_func_log(logger, "Generate Coverage Reports")
