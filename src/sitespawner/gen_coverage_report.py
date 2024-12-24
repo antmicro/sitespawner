@@ -159,11 +159,17 @@ def generate_coverage_reports(
     file_names = set()
 
     for file in files:
-        # line coverage is gathered together with branch coverage
+        if file.name.endswith("_branch.info"):
+            copy2(file, file.name.removesuffix("_branch.info") + "_line.info")
+
+    files = Path(info_report_dir).glob("**/coverage_*.info")
+    for file in files:
+        if file.name.endswith("_line.info"):
+            file_names.add(file.name.removesuffix("_line.info"))
+            line_files[file.name.removesuffix("_line.info")] = file
         if file.name.endswith("_branch.info"):
             file_names.add(file.name.removesuffix("_branch.info"))
             branch_files[file.name.removesuffix("_branch.info")] = file
-            line_files[file.name.removesuffix("_branch.info")] = file
         elif file.name.endswith("_toggle.info"):
             file_names.add(file.name.removesuffix("_toggle.info"))
             toggle_files[file.name.removesuffix("_toggle.info")] = file
