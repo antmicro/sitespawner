@@ -249,4 +249,5 @@ def main(args):
         logo_href=args.logo_href,
         info_report_dir=args.info_report_dir,
         project_name=args.src_project_name,
+        info_pattern=args.info_pattern,
     )

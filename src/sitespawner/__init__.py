@@ -222,6 +222,15 @@ def setup_parser():
             "help": ("Name of the project that is displayed in the webpage for sources."),
         },
     }
+    info_pattern = {
+        "name": "--info-pattern",
+        "options": {
+            "metavar": "info_pattern",
+            "type": str,
+            "default": "coverage*.info",
+            "help": ("Pattern for *.info files to look for."),
+        },
+    }
     reports_args = [
         logo_src,
         logo_href,
@@ -231,6 +240,7 @@ def setup_parser():
         info_report_dir,
         src_remove_pattern,
         src_project_name,
+        info_pattern,
     ]
     create_subparser(
         subparsers=subparsers,
