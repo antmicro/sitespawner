@@ -9,67 +9,95 @@
     </title>
     <link rel="stylesheet" type="text/css" href="cov.css">
     <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
         .container {
             background-color: rgb(169, 169, 169);
             width: 100%;
             min-height: 80%;
             border-radius: 15px;
         }
+        .content {
+            flex: 1;
+        }
+        footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
     </style>
 </head>
 
 <body>
-    <table class="title-header-shadow">
-        <td class="title-container">
-            <table class="title-header">
-                <td class="title-logo">
-                    <a href={{logo_href}}>
-                        <img src={{logo_src}}></img>
-                    </a>
-                </td>
-                <td class="title">
-                    {{ project_name }}
-                    {{ header_token }}
-                    coverage report
-                </td>
-            </table>
-        </td>
-    </table>
-    <center>
-        <table class="info-table">
-            <tr class="info-table-view">
-                <td width="10%" class="headerInfo">Current view:</td>
-                <td width="40%" class="headerInfoValue">
-                    <a href=index.html>{{ root_name }}</a>{% if path_segments %}—{{ path_segments | join('—') }}{% endif
-                    %}
-                </td>
-                <td width=auto></td>
-                <td width="10%"></td>
-                <td width="10%" class="headerCovSummary colTop">Coverage</td>
-                <td width="10%" class="headerCovSummary colTop" title="Covered + Uncovered code">Hit</td>
-                <td width="10%" class="headerCovSummary colTop" title="Exercised code only">Total</td>
-            </tr>
-            <tr>
-                <td class="headerInfo">Test Date:</td>
-                <td class="headerInfoValue">
-                    {{ time_token }}
-                </td>
-                <td></td>
-                {{ toggle_summary_token }}
-            </tr>
-            <tr>
-                <td class="headerInfo">Test:</td>
-                <td class="headerInfoValue">
-                    {{ testname_token }}
-                </td>
-                <td></td>
-                {{ branch_summary_token }}
-            </tr>
-            {{ functional_summary_token }}
+    <div class="content">
+        <table class="title-header-shadow">
+            <td class="title-container">
+                <table class="title-header">
+                    <td class="title-logo">
+                        <a href={{logo_href}}>
+                            <img src={{logo_src}}></img>
+                        </a>
+                    </td>
+                    <td class="title">
+                        {{ project_name }}
+                        {{ header_token }}
+                        coverage report
+                    </td>
+                </table>
+            </td>
         </table>
-    </center>
+        <center>
+            <table class="info-table">
+                <tr class="info-table-view">
+                    <td width="10%" class="headerInfo">Current view:</td>
+                    <td width="40%" class="headerInfoValue">
+                        <a href=index.html>{{ root_name }}</a>{% if path_segments %}—{{ path_segments | join('—') }}{% endif
+                        %}
+                    </td>
+                    <td width=auto></td>
+                    <td width="10%"></td>
+                    <td width="10%" class="headerCovSummary colTop">Coverage</td>
+                    <td width="10%" class="headerCovSummary colTop" title="Covered + Uncovered code">Hit</td>
+                    <td width="10%" class="headerCovSummary colTop" title="Exercised code only">Total</td>
+                </tr>
+                <tr>
+                    <td class="headerInfo">Test Date:</td>
+                    <td class="headerInfoValue">
+                        {{ time_token }}
+                    </td>
+                    <td></td>
+                    {{ toggle_summary_token }}
+                </tr>
+                <tr>
+                    <td class="headerInfo">Test:</td>
+                    <td class="headerInfoValue">
+                        {{ testname_token }}
+                    </td>
+                    <td></td>
+                    {{ branch_summary_token }}
+                </tr>
+                {{ functional_summary_token }}
+            </table>
+        </center>
 
-    {{ src_file_table }}
-
+        {{ src_file_table }}
+    </div>
+    <footer style="display: flex; border-top: 1px solid #27272A; justify-content:space-between; align-items:center; padding: 24px 95px ;">
+        <div style="display:flex; flex-direction: column">
+           <a href={{logo_href}}>
+                <img src={{logo_src}}></img>
+            </a>
+            <span style="font-size: 12px; padding-top:4px; color: #A1A1AA;">Copyright © CHIPS Alliance, 2024.</span>
+        </div>
+        <div style="font-size: 14px; display:flex; flex-wrap:wrap; gap: 24px;">
+            <a style="color:#A1A1AA; text-decoration:none;" href="https://github.com/chipsalliance/Cores-VeeR-EL2">Repository</a>
+            <a style="color:#A1A1AA; text-decoration:none;" href="https://chipsalliance.github.io/Cores-VeeR-EL2/html/main/docs_rendered/html/index.html">Docs</a>
+            <a style="color:#A1A1AA; text-decoration:none;" href="https://github.com/chipsalliance/Cores-VeeR-EL2/issues">Issue tracker</a>
+        </div>
+    </footer>
 </body>
 </html>

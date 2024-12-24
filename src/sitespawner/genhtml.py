@@ -22,18 +22,39 @@ from sitespawner.common import (
 logger = get_logger(__name__)
 
 
+def gradient(percentage):
+    def hex_to_rgb(hex_color):
+        hex_color = hex_color.lstrip('#')
+        return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+
+    def rgb_to_hex(rgb):
+        return '#{:02x}{:02x}{:02x}'.format(
+            max(0, min(255, round(rgb[0]))),
+            max(0, min(255, round(rgb[1]))),
+            max(0, min(255, round(rgb[2])))
+        )
+
+    gradient_colors = ["#EF4444", "#F97316", "#EAB308", "#84CC16", "#16A34A"]
+    colors_rgb = [hex_to_rgb(color) for color in gradient_colors]
+    segment_size = 100 / (len(gradient_colors) - 1)
+    segment_index = int(percentage / segment_size)
+    if segment_index == len(colors_rgb) - 1:
+        segment_index -= 1
+    segment_percentage = (percentage - segment_index * segment_size) / segment_size
+    start_color = colors_rgb[segment_index]
+    end_color = colors_rgb[segment_index + 1]
+    interpolated_color = tuple(
+        start_color[i] + (end_color[i] - start_color[i]) * segment_percentage
+        for i in range(3)
+    )
+    return rgb_to_hex(interpolated_color)
+
+
 def get_color(value: float, total_points: int, min_value: float = 0, max_value: float = 100):
     """Given coverage level, provides the color for the visual coverage bar."""
     frac = value / total_points * 100 if total_points != 0 else 0
 
-    midpoint = (max_value - min_value) / 2
-    if int(total_points) == 0:  # No coverage points
-        r, g, b = (169, 169, 169)  # Background color of the component
-    elif frac <= midpoint:
-        r, g, b = (255, int(255 * frac / midpoint), 0)
-    else:
-        r, g, b = (int(255 * (max_value - frac) / midpoint), 255, 0)
-    return "#{}{}{};".format(*[hex(c)[2:].rjust(2, "0") for c in (r, g, b)])
+    return gradient(frac)
 
 
 # Summary parsing # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -155,7 +176,7 @@ def render_page(
         root_name=root_name,
         path_segments=path_segments,
         testname_token=test_name,
-        time_token=datetime.datetime.now().strftime("%d-%m-%Y"),
+        time_token=datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
         **{
             f"{test}_summary_token": generate_summary(data["Total:"][test], test, template_env)
             for test in data["Total:"].keys()
@@ -211,7 +232,7 @@ def sub_src_view(
         path_segments=path_segments,
         src_file_table=main_table,
         testname_token=test_name,
-        time_token=datetime.datetime.now().strftime("%d-%m-%Y"),
+        time_token=datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
         **{
             f"{test}_summary_token": generate_summary(data[test], test, template_env)
             for test in data.keys()

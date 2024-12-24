@@ -9,16 +9,31 @@
   </title>
   <link rel="stylesheet" type="text/css" href="cov.css">
   <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+    }
     .container {
       background-color: rgb(169, 169, 169);
       width: 100%;
       min-height: 80%;
       border-radius: 15px;
     }
+    .content {
+      flex: 1;
+    }
+    footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
   </style>
 </head>
 
 <body>
+  <div class="content">
   <table class="title-header-shadow">
     <td class="title-container">
       <table class="title-header">
@@ -70,6 +85,19 @@
   <center style="padding-top: 0;">
     {{ fulltable_token }}
   </center>
+  </div>
 </body>
-
+<footer style="display: flex; border-top: 1px solid #27272A; justify-content:space-between; align-items:center; padding: 24px 95px ;">
+  <div style="display:flex; flex-direction: column">
+    <a href={{logo_href}}>
+      <img src={{logo_src}}></img>
+    </a>
+      <span style="font-size: 12px; padding-top:4px; color: #A1A1AA;">Copyright © CHIPS Alliance, 2024.</span>
+  </div>
+  <div style="font-size: 14px; display:flex; flex-wrap:wrap; gap: 24px;">
+    <a style="color:#A1A1AA; text-decoration:none;" href="https://github.com/chipsalliance/Cores-VeeR-EL2">Repository</a>
+    <a style="color:#A1A1AA; text-decoration:none;" href="https://chipsalliance.github.io/Cores-VeeR-EL2/html/main/docs_rendered/html/index.html">Docs</a>
+    <a style="color:#A1A1AA; text-decoration:none;" href="https://github.com/chipsalliance/Cores-VeeR-EL2/issues">Issue tracker</a>
+   </div>
+</footer>
 </html>
